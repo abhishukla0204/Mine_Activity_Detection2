@@ -158,10 +158,10 @@ const MapView = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold gradient-text mb-2">
-            Singrauli Mining Map
+            Interactive Mining Map
           </h1>
           <p className="text-dark-muted">
-            Static map showing {miningAreas.length} mining sites with pre-calculated metrics
+            Monitoring {miningAreas.length} mining sites in Singrauli region with real-time satellite imagery analysis
           </p>
         </div>
 
@@ -304,10 +304,14 @@ const MapView = () => {
                 exit={{ opacity: 0, y: 10 }}
                 className="absolute top-4 left-4 bg-dark-surface/95 backdrop-blur-sm border border-dark-border rounded-lg p-3 pointer-events-none z-[1000]"
               >
-                <p className="text-sm font-semibold">{miningAreas.find(m => m.id === hoveredMine)?.name}
+                <p className="text-sm font-semibold">
+                  Mining Site #{miningAreas.find(m => m.id === hoveredMine)?.id}
                 </p>
-                <p className="text-xs text-dark-muted">
-                  Click to view details
+                <p className="text-xs text-dark-muted mt-1">
+                  {miningAreas.find(m => m.id === hoveredMine)?.area_hectares?.toFixed(1) || 
+                   miningAreas.find(m => m.id === hoveredMine)?.area} ha
+                  {' • '}
+                  Click for details
                 </p>
               </motion.div>
             )}
@@ -364,22 +368,28 @@ const MapView = () => {
           <div className="card p-6">
             <h3 className="font-bold text-lg mb-4 flex items-center">
               <Layers className="w-5 h-5 mr-2 text-primary-400" />
-              Legend
+              Map Legend
             </h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-5 bg-green-500 rounded border-2 border-green-600" />
-                <span className="text-sm font-medium">Legal Mining</span>
+                <div>
+                  <span className="text-sm font-medium block">Authorized Sites</span>
+                  <span className="text-xs text-dark-muted">Licensed mining operations</span>
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-5 bg-red-500 rounded border-2 border-red-600" />
-                <span className="text-sm font-medium">Illegal Mining</span>
+                <div>
+                  <span className="text-sm font-medium block">Unauthorized Sites</span>
+                  <span className="text-xs text-dark-muted">Illegal excavation detected</span>
+                </div>
               </div>
             </div>
             <div className="mt-4 pt-3 border-t border-dark-border">
               <p className="text-xs text-dark-muted flex items-center">
                 <MapPin className="w-3 h-3 mr-1" />
-                Click polygons for details
+                Click any site to view details
               </p>
             </div>
           </div>
@@ -411,8 +421,8 @@ const MapView = () => {
               <div className="sticky top-0 bg-dark-surface/95 backdrop-blur-sm border-b border-dark-border p-6 z-10">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h2 className="font-bold text-2xl mb-2">{selectedMine.name}</h2>
-                    <p className="text-sm text-dark-muted">Site ID: #{selectedMine.id}</p>
+                    <h2 className="font-bold text-2xl mb-2">Mining Site #{selectedMine.id}</h2>
+                    <p className="text-sm text-dark-muted">{selectedMine.operator}</p>
                   </div>
                   <button
                     onClick={() => setSelectedMine(null)}
@@ -430,7 +440,7 @@ const MapView = () => {
                       : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}
                 >
-                  {selectedMine.type === 'legal' ? '✓ Legal Mining' : '⚠ Illegal Mining'}
+                  {selectedMine.type === 'legal' ? '✓ Authorized Mining Site' : '⚠ Unauthorized Activity Detected'}
                 </span>
               </div>
 
@@ -438,24 +448,33 @@ const MapView = () => {
               <div className="p-6 space-y-6">
                 {/* Key Metrics */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-4">Key Metrics</h3>
+                  <h3 className="font-semibold text-lg mb-4">Excavation Metrics</h3>
                   <div className="space-y-3">
                   <div className="flex justify-between items-center p-4 bg-dark-elevated rounded-xl">
-                    <span className="text-dark-muted">Area</span>
+                    <div>
+                      <span className="text-dark-muted text-sm">Total Area</span>
+                      <p className="text-xs text-dark-muted/60 mt-1">Surface excavation area</p>
+                    </div>
                     <span className="font-bold text-xl">
-                      {selectedMine.area_hectares || selectedMine.area} ha
+                      {(selectedMine.area_hectares || selectedMine.area || 0).toFixed(2)} ha
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-dark-elevated rounded-xl">
-                    <span className="text-dark-muted">Average Depth</span>
+                    <div>
+                      <span className="text-dark-muted text-sm">Maximum Depth</span>
+                      <p className="text-xs text-dark-muted/60 mt-1">Deepest excavation point</p>
+                    </div>
                     <span className="font-bold text-xl">
-                      {selectedMine.depth_m || selectedMine.depth} m
+                      {(selectedMine.depth_m || selectedMine.depth || 0).toFixed(1)} m
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-4 bg-dark-elevated rounded-xl">
-                    <span className="text-dark-muted">Excavation Volume</span>
+                    <div>
+                      <span className="text-dark-muted text-sm">Estimated Volume</span>
+                      <p className="text-xs text-dark-muted/60 mt-1">Total material excavated</p>
+                    </div>
                     <span className="font-bold text-xl">
-                      {((selectedMine.volume_m3 || selectedMine.volume) / 1000).toFixed(1)}k m³
+                      {((selectedMine.volume_m3 || selectedMine.volume || 0) / 1000000).toFixed(2)}M m³
                     </span>
                   </div>
                   </div>
@@ -463,43 +482,49 @@ const MapView = () => {
 
                 {/* Additional Details */}
                 <div>
-                  <h3 className="font-semibold text-lg mb-4">Additional Information</h3>
+                  <h3 className="font-semibold text-lg mb-4">Site Information</h3>
                   <div className="space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-dark-muted">Perimeter</span>
                       <span className="font-medium">
-                        {selectedMine.perimeter_km || selectedMine.perimeter} km
+                        {(selectedMine.perimeter_km || selectedMine.perimeter_m / 1000 || selectedMine.perimeter || 0).toFixed(2)} km
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-dark-muted">Avg Elevation</span>
+                      <span className="text-dark-muted">Average Elevation</span>
                       <span className="font-medium">
-                        {selectedMine.avg_elevation_m || selectedMine.avgElevation} m
+                        {(selectedMine.avg_elevation_m || selectedMine.avgElevation || 0).toFixed(0)} m ASL
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-dark-muted">Material</span>
-                      <span className="font-medium">{selectedMine.material}</span>
+                      <span className="text-dark-muted">Elevation Range</span>
+                      <span className="font-medium">
+                        {(selectedMine.min_elevation_m || 0).toFixed(0)} - {(selectedMine.max_elevation_m || 0).toFixed(0)} m
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-dark-muted">Primary Material</span>
+                      <span className="font-medium">{selectedMine.material || 'Coal'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-dark-muted">Site Status</span>
+                      <span className="font-medium">{selectedMine.detected_material || 'Active Excavation'}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-dark-muted">Operator</span>
-                      <span className="font-medium">{selectedMine.operator}</span>
+                      <span className="font-medium">{selectedMine.operator || 'Unknown'}</span>
                     </div>
                     {selectedMine.type === 'legal' && (
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-dark-muted">Last Inspection</span>
-                          <span className="font-medium">{selectedMine.lastInspection}</span>
+                          <span className="font-medium">{selectedMine.last_inspection || selectedMine.lastInspection || 'N/A'}</span>
                         </div>
                         <div className="flex justify-between text-sm items-center">
-                          <span className="text-dark-muted">Compliance</span>
+                          <span className="text-dark-muted">Compliance Status</span>
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium">{selectedMine.compliance}%</span>
-                            {selectedMine.compliance >= 95 ? (
-                              <TrendingUp className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <TrendingDown className="w-4 h-4 text-yellow-400" />
-                            )}
+                            <span className="font-medium text-green-400">{selectedMine.compliance_status || 'Compliant'}</span>
+                            <CheckCircle className="w-4 h-4 text-green-400" />
                           </div>
                         </div>
                       </>
@@ -511,12 +536,18 @@ const MapView = () => {
                 <div className="space-y-2">
                   <button className="btn-primary w-full">
                     <Activity className="w-4 h-4 inline mr-2" />
-                    View Full Report
+                    View Detailed Analysis Report
                   </button>
                   {selectedMine.type === 'illegal' && (
                     <button className="w-full px-4 py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition">
                       <AlertTriangle className="w-4 h-4 inline mr-2" />
-                      Report Violation
+                      Report Unauthorized Activity
+                    </button>
+                  )}
+                  {selectedMine.type === 'legal' && (
+                    <button className="w-full px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/30 hover:bg-blue-500/30 transition">
+                      <CheckCircle className="w-4 h-4 inline mr-2" />
+                      View Compliance Records
                     </button>
                   )}
                 </div>

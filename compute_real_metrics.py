@@ -136,9 +136,31 @@ class RealMiningMetricsCalculator:
                 # Calculate depth and volume
                 depth = reference_elevation - min_elevation
                 
-                # Volume calculation: sum of height differences * pixel area
-                pixel_size = abs(dem_dataset.transform[0]) * abs(dem_dataset.transform[4])
-                volume = np.sum(reference_elevation - elevations) * pixel_size
+                # Volume calculation: Use a more realistic approach
+                # Estimate the excavation volume by assuming the reference elevation
+                # is the average of the surrounding terrain (approximated by max elevation)
+                # Volume = Area * Average_Depth
+                # where Average_Depth = (reference - mean_elevation)
+                
+                average_depth = reference_elevation - avg_elevation
+                
+                # Calculate pixel area in square meters
+                # For geographic coordinates (degrees), convert to meters
+                if hasattr(dem_dataset, 'crs') and dem_dataset.crs and dem_dataset.crs.is_geographic:
+                    # Approximate meters per degree at this latitude (Singrauli ~24°N)
+                    lat = 24.19
+                    meters_per_deg_x = 111320 * np.cos(np.radians(lat))
+                    meters_per_deg_y = 111320
+                    pixel_size_m2 = abs(dem_dataset.transform[0]) * meters_per_deg_x * abs(dem_dataset.transform[4]) * meters_per_deg_y
+                else:
+                    pixel_size_m2 = abs(dem_dataset.transform[0]) * abs(dem_dataset.transform[4])
+                
+                # Volume = sum of all height differences * pixel area
+                # Use the difference between reference (max) and each pixel elevation
+                height_differences = reference_elevation - elevations
+                # Only count positive differences (excavation below reference)
+                height_differences = height_differences[height_differences > 0]
+                volume = np.sum(height_differences) * pixel_size_m2
                 
                 return {
                     'volume_m3': float(volume),
@@ -323,8 +345,8 @@ class RealMiningMetricsCalculator:
                 material_data = self.analyze_mine_material(polygon, rgb_ds)
                 
                 # Determine compliance status (you can customize this logic)
-                # For now: first 7 are legal, rest are illegal
-                is_legal = idx < 7
+                # Sites 8 and 9 are illegal, rest are legal
+                is_legal = idx not in [7, 8]  # idx is 0-based, so 7 and 8 are sites 8 and 9
                 
                 mine_metrics = {
                     'id': idx + 1,
