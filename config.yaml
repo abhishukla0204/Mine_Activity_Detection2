@@ -1,0 +1,41 @@
+# Example configuration for Mining Activity Monitoring Tool
+
+data:
+  singrauli_dir: data/Singrauli
+  satellite_image: Singrauli_Sentinel2_RGB.tif
+  dem_file: Singrauli_SRTM_DEM.tif
+  reference_image: Singrauli_mines_image.jpeg
+  annotations_file: mine_shape/_annotations.coco.json
+  boundary_shapefile: null  # Optional: path to authorized boundary shapefile
+
+processing:
+  resample_dem: true
+  normalize_images: true
+  percentile_clip: [2, 98]
+
+detection:
+  min_area: 100  # Minimum mining area in pixels
+  use_coco_annotations: true
+
+depth_volume:
+  reference_elevation: mean  # Options: 'mean', 'median', 'max', 'percentile', or numeric value
+  volume_method: simpsons    # Options: 'simpsons', 'trapezoidal', 'montecarlo'
+  num_intervals: 100
+
+visualization:
+  2d_map:
+    basemap: OpenStreetMap
+    zoom_start: 12
+  3d_view:
+    vertical_exaggeration: 3.0
+    colormap: terrain
+
+report:
+  output_dir: outputs/reports
+  format: html  # Options: 'html', 'pdf', 'both'
+  include_3d: true
+  include_statistics: true
+
+output:
+  save_intermediate: true
+  visualization_dir: outputs/visualizations
