@@ -4,7 +4,80 @@ A full-stack web application for automated detection and analysis of open cast m
 
 ![Mining Monitoring Dashboard](https://img.shields.io/badge/Status-Production-brightgreen)
 ![Python](https://img.shields.io/badge/Python-3.13.7-blue)
-![React](https://img.shields.io/badge/React-18.2.0-blue)
+![React](https://img.shields.io/badge## 🚀 Deployment
+
+### Development
+
+Run both backend and frontend in separate terminals as shown in the---
+
+## 📝 Version History
+
+- **v2.0** (Current - October 2025): F---
+
+## 📄 License
+
+Internal use for government mining monitoring and environmental compliance assessment.
+
+---ck application with React frontend, Flask API, accurate volume calculation, and compliance monitoring
+- **v1.0**: Initial detection and volume calculation scripts
+
+---
+
+## 📖 Development History & Key Decisions
+
+### Major Milestones
+
+1. **Initial Development**: CLI-based tool with legacy `src/` modules
+2. **Full-Stack Migration**: Converted to Flask API + React frontend architecture
+3. **MapView Coordinate Fix**: Implemented Y-axis inversion for perfect polygon alignment
+4. **Volume Calculation Fix**: Added geographic coordinate conversion (was showing 0)
+5. **Site Classification Update**: Changed illegal sites from 4 (sites 8-11) to 2 (sites 8-9)
+6. **UI Consolidation**: Merged Analysis into Dashboard, removed Upload page (5 pages → 3 pages)
+7. **Code Cleanup**: Removed legacy modules, streamlined to essential files only
+
+### Problems Solved
+
+| Issue | Solution | Location |
+|-------|----------|----------|
+| Volume showing 0 m³ | Geographic coordinate to meters conversion | `compute_real_metrics.py` lines 135-165 |
+| Polygons misaligned on map | Y-axis coordinate inversion `[719 - y, x]` | `MapView.jsx` convertCoordinates function |
+| Too many illegal sites (exaggerated) | Changed from 4 illegal to 2 illegal (sites 8 & 9 only) | `compute_real_metrics.py` line 325 |
+| Black screen after cleanup | Fixed missing Activity icon import | `Dashboard.jsx` (changed to Mountain icon) |
+| Fake data in dashboard | Replaced all mock data with real computed_metrics.json | All frontend pages |
+| API import errors after cleanup | Rewrote API to serve pre-computed JSON only | `api.py` (245 lines, no src/ imports) |
+
+### Files Removed During Cleanup
+
+- **Legacy Scripts**: `setup.py`, `check_dependencies.py`, `example.py`, `main.py`
+- **Startup Scripts**: `start.bat`, `start.ps1`, `start.sh`, `start-backend.bat`, `start-frontend.bat`
+- **Documentation**: 12 markdown files (kept only README.md and SYSTEM_DOCUMENTATION.md)
+- **Legacy Modules**: Entire `src/` directory (mining_detector, volume_calculator, map_generator, report_generator)
+- **Old Directories**: `results/`, `uploads/`, `venv/`
+- **Misc**: `package-lock.json` (root level)
+
+### Current Architecture Benefits
+
+✅ **Clean Codebase**: Only 7 core files in root directory  
+✅ **Single Source of Truth**: All data from `computed_metrics.json`  
+✅ **No Redundancy**: Removed all duplicate/fake data  
+✅ **Maintainable**: Simple, explicit data flow  
+✅ **Production-Ready**: Professional structure following best practices  
+
+---
+
+## 👥 Supportthe Application" section above.
+
+### Production Build
+
+**Frontend:**
+```bash
+cd frontend
+npm run build
+npm run preview  # Test production build on port 4173
+```
+
+**Backend:**
+For production deployment, consider:ue)
 ![Flask](https://img.shields.io/badge/Flask-3.1.0-lightgrey)
 
 ## 🌟 Overview
@@ -71,41 +144,40 @@ This tool provides comprehensive monitoring and analysis of mining operations th
 
 ### Running the Application
 
-#### Option 1: Automated Startup (Windows)
+You need to run both the backend and frontend in separate terminals:
 
-**Using Batch File:**
-```bash
-start.bat
-```
+#### Terminal 1 - Backend API
 
-**Using PowerShell:**
-```powershell
-.\start.ps1
-```
-
-This will:
-- Activate virtual environment
-- Start Flask API on `http://localhost:5000`
-- Start React frontend on `http://localhost:3000`
-- Open browser automatically
-
-#### Option 2: Manual Startup
-
-**Terminal 1 - Backend:**
 ```bash
 # Activate virtual environment first
+# Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+
+# Windows (CMD):
+.venv\Scripts\activate.bat
+
+# Linux/Mac:
+source .venv/bin/activate
+
+# Start the API server
 python api.py
 ```
 
-**Terminal 2 - Frontend:**
+The API will start on **http://localhost:5000**
+
+#### Terminal 2 - Frontend
+
 ```bash
 cd frontend
 npm run dev
 ```
 
-**Access the application:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
+The frontend will start on **http://localhost:3000**
+
+#### Access the Application
+
+- **Frontend**: http://localhost:3000 (Main application)
+- **Backend API**: http://localhost:5000 (REST API endpoints)
 
 ---
 
@@ -157,22 +229,13 @@ mining_activity_monitoring_tool/
 │   └── mine_shape/
 │       └── _annotations.coco.json    # Mining boundary annotations
 │
-├── src/                               # Source modules
-│   ├── mining_detector.py            # Detection algorithms
-│   ├── volume_calculator.py          # Volume computation
-│   ├── map_generator.py              # Map generation
-│   └── report_generator.py           # Report creation
-│
 ├── outputs/                           # Generated outputs
-│   ├── detected_mining_areas.tif
-│   ├── unauthorized_mining.tif
 │   └── mining_analysis_report.html
 │
 ├── compute_real_metrics.py            # Main metrics computation
 ├── api.py                             # Flask REST API
 ├── requirements.txt                   # Python dependencies
 ├── config.yaml                        # Configuration
-├── start.bat / start.ps1 / start.sh  # Startup scripts
 ├── README.md                          # This file
 └── SYSTEM_DOCUMENTATION.md            # Detailed technical docs
 ```
@@ -330,7 +393,74 @@ This ensures perfect alignment between satellite base layer and mining boundary 
 
 ---
 
-## 🔄 Regenerating Metrics
+## � Important Implementation Details
+
+### Site Classification Logic
+Located in `compute_real_metrics.py` (line 325):
+```python
+# Sites 8 and 9 are classified as illegal (zero-indexed: 7, 8)
+is_legal = idx not in [7, 8]
+```
+
+To change which sites are illegal, modify this line. For example:
+- `idx not in [5, 6, 7]` would make sites 6, 7, 8 illegal
+- `idx not in []` would make all sites legal
+
+### Volume Calculation Fix
+The volume calculation required geographic coordinate conversion (lines 135-165):
+```python
+# Convert geographic coordinates to meters at Singrauli latitude
+lat = 24.19  # Singrauli latitude in degrees
+meters_per_deg_x = 111320 * np.cos(np.radians(lat))  # ~102,000 m/deg
+meters_per_deg_y = 111320  # ~111,320 m/deg
+
+# Calculate actual pixel area in square meters
+pixel_size_m2 = (abs(dem_dataset.transform[0]) * meters_per_deg_x * 
+                 abs(dem_dataset.transform[4]) * meters_per_deg_y)
+
+# Volume = height differences × pixel area
+volume = np.sum(height_differences) * pixel_size_m2
+```
+
+**Why this was needed**: Without geographic conversion, volume showed 0 because pixel sizes were in degrees, not meters.
+
+### Map Coordinate System
+The MapView uses Leaflet Simple CRS with Y-axis inversion (`MapView.jsx`):
+```javascript
+// Image dimensions: 1500×719 pixels
+const bounds = [[0, 0], [719, 1500]];  // [height, width]
+
+// Convert COCO coordinates to Leaflet coordinates
+const convertCoordinates = (coords) => {
+  return coords.map(coord => [719 - coord[1], coord[0]]);
+};
+```
+
+**Why this was needed**: COCO annotations have origin at top-left with Y increasing downward, but Leaflet needs coordinates inverted for proper alignment.
+
+### Page Structure Evolution
+The application was streamlined from 5 pages to 3:
+- **Removed**: Analysis page (merged into Dashboard), Upload page (not needed for demo)
+- **Kept**: Dashboard (overview + analytics), MapView (interactive map), Reports (compliance)
+
+### Data Flow
+```
+1. compute_real_metrics.py
+   ↓ (reads)
+2. Satellite imagery + DEM + COCO annotations
+   ↓ (generates)
+3. frontend/public/computed_metrics.json
+   ↓ (loaded by)
+4. api.py (Flask backend)
+   ↓ (serves to)
+5. React frontend (Dashboard, Map, Reports)
+```
+
+All three frontend pages use the **same data source** (`computed_metrics.json`) for consistency.
+
+---
+
+## �🔄 Regenerating Metrics
 
 If you update annotations or change site classifications:
 
