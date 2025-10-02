@@ -192,18 +192,20 @@ const MapView = () => {
         </div>
       </div>
 
-      {/* Map Container - Full Width, Larger */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card p-0 overflow-hidden relative mb-8"
-        style={{ 
-          aspectRatio: `${imageWidth} / ${imageHeight}`,
-          width: '100%',
-          maxWidth: '100%',
-          minHeight: '600px'
-        }}
-      >
+      {/* Main Content Grid - Map on left, Stats on right */}
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+        {/* Map Container - Takes 3 columns */}
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="lg:col-span-3 card p-0 overflow-hidden relative"
+          style={{ 
+            aspectRatio: `${imageWidth} / ${imageHeight}`,
+            width: '100%',
+            maxWidth: '100%',
+            minHeight: '600px'
+          }}
+        >
         {mapError ? (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
@@ -310,17 +312,64 @@ const MapView = () => {
               </motion.div>
             )}
           </AnimatePresence>
+        </motion.div>
 
-          {/* Map Legend - Larger and more prominent */}
-          <div className="absolute bottom-6 right-6 bg-dark-surface/95 backdrop-blur-sm border border-dark-border rounded-xl p-5 z-[1000] shadow-2xl">
-            <h4 className="text-base font-bold mb-4 flex items-center">
+        {/* Statistics Sidebar - Takes 1 column on the right */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="space-y-6"
+        >
+          {/* Quick Statistics */}
+          <div className="card p-6">
+            <h3 className="font-bold text-lg mb-6 flex items-center">
+              <Activity className="w-6 h-6 mr-2 text-primary-400" />
+              Statistics
+            </h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-3 bg-dark-elevated rounded-lg">
+                <span className="text-dark-muted text-sm">Total Sites</span>
+                <span className="font-bold text-xl">{miningAreas.length}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                <span className="text-green-400 font-medium text-sm">Legal</span>
+                <span className="font-bold text-xl text-green-400">
+                  {miningAreas.filter((m) => m.type === 'legal').length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                <span className="text-red-400 font-medium text-sm">Illegal</span>
+                <span className="font-bold text-xl text-red-400">
+                  {miningAreas.filter((m) => m.type === 'illegal').length}
+                </span>
+              </div>
+              <div className="border-t border-dark-border pt-4 mt-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-dark-muted text-sm">Total Area</span>
+                  <span className="font-bold">
+                    {miningAreas.reduce((sum, m) => sum + (m.area_hectares || m.area || 0), 0).toFixed(0)} ha
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-dark-muted text-sm">Volume</span>
+                  <span className="font-bold">
+                    {(miningAreas.reduce((sum, m) => sum + (m.volume_m3 || m.volume || 0), 0) / 1000000).toFixed(1)}M m³
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Legend Card */}
+          <div className="card p-6">
+            <h3 className="font-bold text-lg mb-4 flex items-center">
               <Layers className="w-5 h-5 mr-2 text-primary-400" />
               Legend
-            </h4>
+            </h3>
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-5 bg-green-500 rounded border-2 border-green-600" />
-                <span className="text-sm font-medium">Legal Mining (NCL)</span>
+                <span className="text-sm font-medium">Legal Mining</span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-5 bg-red-500 rounded border-2 border-red-600" />
@@ -328,50 +377,69 @@ const MapView = () => {
               </div>
             </div>
             <div className="mt-4 pt-3 border-t border-dark-border">
-              <p className="text-xs text-dark-muted">
-                <MapPin className="w-3 h-3 inline mr-1" />
-                Map is static (no zoom/scroll)
+              <p className="text-xs text-dark-muted flex items-center">
+                <MapPin className="w-3 h-3 mr-1" />
+                Click polygons for details
               </p>
             </div>
           </div>
         </motion.div>
+      </div>
 
-      {/* Details Grid Below Map - More spacious */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Mine Details Sidebar - Takes 2 columns */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="lg:col-span-2 space-y-6"
-        >
-          {/* Selected Mine Details */}
-          <AnimatePresence mode="wait">
-            {selectedMine ? (
-              <motion.div
-                key={selectedMine.id}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="card p-6"
-              >
-                <div className="flex items-start justify-between mb-6">
+      {/* Sliding Mine Details Panel from Right */}
+      <AnimatePresence>
+        {selectedMine && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[2000]"
+              onClick={() => setSelectedMine(null)}
+            />
+            
+            {/* Sliding Panel */}
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="fixed top-0 right-0 h-full w-full md:w-[500px] bg-dark-surface border-l border-dark-border z-[2001] overflow-y-auto shadow-2xl"
+            >
+              {/* Panel Header */}
+              <div className="sticky top-0 bg-dark-surface/95 backdrop-blur-sm border-b border-dark-border p-6 z-10">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="font-bold text-xl mb-1">{selectedMine.name}</h3>
+                    <h2 className="font-bold text-2xl mb-2">{selectedMine.name}</h2>
                     <p className="text-sm text-dark-muted">Site ID: #{selectedMine.id}</p>
                   </div>
-                  <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                      selectedMine.type === 'legal'
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                        : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    }`}
+                  <button
+                    onClick={() => setSelectedMine(null)}
+                    className="p-2 hover:bg-dark-elevated rounded-lg transition"
                   >
-                    {selectedMine.type === 'legal' ? '✓ Legal' : '⚠ Illegal'}
-                  </span>
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
+                <span
+                  className={`inline-block px-4 py-2 rounded-full text-sm font-semibold ${
+                    selectedMine.type === 'legal'
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}
+                >
+                  {selectedMine.type === 'legal' ? '✓ Legal Mining' : '⚠ Illegal Mining'}
+                </span>
+              </div>
 
+              {/* Panel Content */}
+              <div className="p-6 space-y-6">
                 {/* Key Metrics */}
-                <div className="space-y-4 mb-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-4">Key Metrics</h3>
+                  <div className="space-y-3">
                   <div className="flex justify-between items-center p-4 bg-dark-elevated rounded-xl">
                     <span className="text-dark-muted">Area</span>
                     <span className="font-bold text-xl">
@@ -390,53 +458,57 @@ const MapView = () => {
                       {((selectedMine.volume_m3 || selectedMine.volume) / 1000).toFixed(1)}k m³
                     </span>
                   </div>
+                  </div>
                 </div>
 
                 {/* Additional Details */}
-                <div className="border-t border-dark-border pt-5 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dark-muted">Perimeter</span>
-                    <span className="font-medium">
-                      {selectedMine.perimeter_km || selectedMine.perimeter} km
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dark-muted">Avg Elevation</span>
-                    <span className="font-medium">
-                      {selectedMine.avg_elevation_m || selectedMine.avgElevation} m
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dark-muted">Material</span>
-                    <span className="font-medium">{selectedMine.material}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-dark-muted">Operator</span>
-                    <span className="font-medium">{selectedMine.operator}</span>
-                  </div>
-                  {selectedMine.type === 'legal' && (
-                    <>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-dark-muted">Last Inspection</span>
-                        <span className="font-medium">{selectedMine.lastInspection}</span>
-                      </div>
-                      <div className="flex justify-between text-sm items-center">
-                        <span className="text-dark-muted">Compliance</span>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">{selectedMine.compliance}%</span>
-                          {selectedMine.compliance >= 95 ? (
-                            <TrendingUp className="w-4 h-4 text-green-400" />
-                          ) : (
-                            <TrendingDown className="w-4 h-4 text-yellow-400" />
-                          )}
+                <div>
+                  <h3 className="font-semibold text-lg mb-4">Additional Information</h3>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-dark-muted">Perimeter</span>
+                      <span className="font-medium">
+                        {selectedMine.perimeter_km || selectedMine.perimeter} km
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-dark-muted">Avg Elevation</span>
+                      <span className="font-medium">
+                        {selectedMine.avg_elevation_m || selectedMine.avgElevation} m
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-dark-muted">Material</span>
+                      <span className="font-medium">{selectedMine.material}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-dark-muted">Operator</span>
+                      <span className="font-medium">{selectedMine.operator}</span>
+                    </div>
+                    {selectedMine.type === 'legal' && (
+                      <>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-dark-muted">Last Inspection</span>
+                          <span className="font-medium">{selectedMine.lastInspection}</span>
                         </div>
-                      </div>
-                    </>
-                  )}
+                        <div className="flex justify-between text-sm items-center">
+                          <span className="text-dark-muted">Compliance</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">{selectedMine.compliance}%</span>
+                            {selectedMine.compliance >= 95 ? (
+                              <TrendingUp className="w-4 h-4 text-green-400" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4 text-yellow-400" />
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="mt-4 space-y-2">
+                <div className="space-y-2">
                   <button className="btn-primary w-full">
                     <Activity className="w-4 h-4 inline mr-2" />
                     View Full Report
@@ -448,70 +520,11 @@ const MapView = () => {
                     </button>
                   )}
                 </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="no-selection"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="card text-center p-12"
-              >
-                <MapPin className="w-20 h-20 mx-auto mb-6 text-primary-400 opacity-50" />
-                <h3 className="font-bold text-xl mb-3">No Mine Selected</h3>
-                <p className="text-dark-muted">
-                  Click on any colored polygon on the map to view detailed information about the mining site
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Quick Statistics - Takes 1 column */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-        >
-          <div className="card p-6">
-            <h3 className="font-bold text-lg mb-6 flex items-center">
-              <Activity className="w-6 h-6 mr-2 text-primary-400" />
-              Map Statistics
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center p-3 bg-dark-elevated rounded-lg">
-                <span className="text-dark-muted">Total Sites</span>
-                <span className="font-bold text-xl">{miningAreas.length}</span>
               </div>
-              <div className="flex justify-between items-center p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <span className="text-green-400 font-medium">Legal Sites</span>
-                <span className="font-bold text-xl text-green-400">
-                  {miningAreas.filter((m) => m.type === 'legal').length}
-                </span>
-              </div>
-              <div className="flex justify-between items-center p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                <span className="text-red-400 font-medium">Illegal Sites</span>
-                <span className="font-bold text-xl text-red-400">
-                  {miningAreas.filter((m) => m.type === 'illegal').length}
-                </span>
-              </div>
-              <div className="border-t border-dark-border pt-4 mt-4 space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-dark-muted text-sm">Total Area</span>
-                  <span className="font-semibold">
-                    {miningAreas.reduce((sum, m) => sum + (m.area_hectares || m.area || 0), 0).toFixed(1)} ha
-                  </span>
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-dark-muted text-sm">Total Volume</span>
-                  <span className="font-semibold">
-                    {(miningAreas.reduce((sum, m) => sum + (m.volume_m3 || m.volume || 0), 0) / 1000000).toFixed(2)}M m³
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
