@@ -1,179 +1,212 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { FileText, Download, Eye, Calendar, MapPin, BarChart3 } from 'lucide-react'
+import { FileText, Download, Calendar, MapPin, BarChart3, AlertTriangle } from 'lucide-react'
 
 const Reports = () => {
-  const [selectedReport, setSelectedReport] = useState(null)
+  const [miningData, setMiningData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const reports = [
-    {
-      id: 1,
-      title: 'Singrauli Mining Assessment - November 2024',
-      date: '2024-11-15',
-      type: 'comprehensive',
-      region: 'Singrauli, MP',
-      sites: 11,
-      violations: 4,
-      totalArea: 152.4,
-      fileSize: '2.4 MB',
-    },
-    {
-      id: 2,
-      title: 'Quarterly Mining Report Q3 2024',
-      date: '2024-09-30',
-      type: 'quarterly',
-      region: 'Singrauli, MP',
-      sites: 11,
-      violations: 3,
-      totalArea: 148.2,
-      fileSize: '3.1 MB',
-    },
-    {
-      id: 3,
-      title: 'Violation Alert - Unauthorized Expansion',
-      date: '2024-10-22',
-      type: 'alert',
-      region: 'Singrauli, MP',
-      sites: 2,
-      violations: 2,
-      totalArea: 18.5,
-      fileSize: '1.2 MB',
-    },
-  ]
+  useEffect(() => {
+    // Load actual mining metrics
+    fetch('/computed_metrics.json')
+      .then(res => res.json())
+      .then(data => {
+        setMiningData(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('Error loading metrics:', err)
+        setLoading(false)
+      })
+  }, [])
 
-  const visualizations = [
-    { name: '3D Terrain Model', type: '3d_terrain', format: 'HTML' },
-    { name: 'Depth Heatmap', type: 'heatmap', format: 'PNG' },
-    { name: 'Classification Map', type: 'map', format: 'HTML' },
-    { name: 'Volume Analysis Chart', type: 'chart', format: 'PNG' },
-  ]
+  if (loading || !miningData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <FileText className="w-12 h-12 mx-auto mb-4 text-primary-400 animate-pulse" />
+          <p className="text-dark-muted">Loading report data...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const { metadata, mines } = miningData
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-4xl font-bold gradient-text mb-2">
-          Reports & Visualizations
+          Analysis Reports
         </h1>
         <p className="text-dark-muted">
-          Access generated reports, 3D models, and analysis results
+          Comprehensive mining activity assessment and compliance documentation
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Reports List */}
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-2xl font-bold mb-4">Available Reports</h2>
-          
-          {reports.map((report) => (
-            <motion.div
-              key={report.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`card cursor-pointer transition-all hover:shadow-xl ${
-                selectedReport?.id === report.id ? 'ring-2 ring-primary-500' : ''
-              }`}
-              onClick={() => setSelectedReport(report)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <FileText className="w-5 h-5 text-primary-400" />
-                    <h3 className="font-bold text-lg">{report.title}</h3>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="flex items-center space-x-2 text-sm">
-                      <Calendar className="w-4 h-4 text-dark-muted" />
-                      <span className="text-dark-muted">{report.date}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <MapPin className="w-4 h-4 text-dark-muted" />
-                      <span className="text-dark-muted">{report.region}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <BarChart3 className="w-4 h-4 text-dark-muted" />
-                      <span className="text-dark-muted">{report.sites} sites analyzed</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-sm">
-                      <span className="text-dark-muted">Size: {report.fileSize}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3 mt-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        report.type === 'alert'
-                          ? 'bg-red-500/20 text-red-400'
-                          : report.type === 'quarterly'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : 'bg-purple-500/20 text-purple-400'
-                      }`}
-                    >
-                      {report.type.toUpperCase()}
-                    </span>
-                    {report.violations > 0 && (
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-red-500/20 text-red-400">
-                        {report.violations} Violations
-                      </span>
-                    )}
-                    <span className="text-sm text-dark-muted">
-                      {report.totalArea} hectares
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col space-y-2 ml-4">
-                  <button className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition">
-                    <Eye className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 rounded-lg bg-green-500/20 text-green-400 hover:bg-green-500/30 transition">
-                    <Download className="w-5 h-5" />
-                  </button>
-                </div>
+      {/* Report Summary Card */}
+      <div className="card bg-gradient-to-br from-primary-500/10 to-accent-purple/10 border-primary-500/30">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h2 className="text-2xl font-bold mb-4">Singrauli Mining Assessment Report</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div>
+                <p className="text-sm text-dark-muted mb-1">Report Date</p>
+                <p className="font-semibold flex items-center">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {metadata.computation_date}
+                </p>
               </div>
-            </motion.div>
-          ))}
+              <div>
+                <p className="text-sm text-dark-muted mb-1">Region</p>
+                <p className="font-semibold flex items-center">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Singrauli, MP
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-dark-muted mb-1">Sites Analyzed</p>
+                <p className="font-semibold flex items-center">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  {metadata.total_mines} sites
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-dark-muted mb-1">Violations</p>
+                <p className="font-semibold flex items-center text-red-400">
+                  <AlertTriangle className="w-4 h-4 mr-2" />
+                  {metadata.illegal_mines} sites
+                </p>
+              </div>
+            </div>
+          </div>
+          <button className="btn-primary ml-4">
+            <Download className="w-5 h-5 inline mr-2" />
+            Download PDF
+          </button>
         </div>
+      </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Quick Stats */}
+      {/* Main Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Detailed Analysis */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Executive Summary */}
           <div className="card">
-            <h3 className="font-bold mb-4">Report Statistics</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-dark-muted">Total Reports</span>
-                <span className="font-semibold">{reports.length}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-dark-muted">Latest Report</span>
-                <span className="font-semibold">Nov 2024</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-red-400">Active Violations</span>
-                <span className="font-semibold">4</span>
+            <h3 className="text-xl font-bold mb-4">Executive Summary</h3>
+            <div className="space-y-4">
+              <p className="text-dark-muted leading-relaxed">
+                This comprehensive assessment analyzes {metadata.total_mines} mining sites across the Singrauli region 
+                using high-resolution satellite imagery and Digital Elevation Model (DEM) data.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-dark-elevated rounded-lg">
+                  <p className="text-sm text-dark-muted mb-2">Total Excavation Area</p>
+                  <p className="text-2xl font-bold gradient-text">
+                    {(metadata.total_area_hectares / 1000).toFixed(2)} km²
+                  </p>
+                </div>
+                <div className="p-4 bg-dark-elevated rounded-lg">
+                  <p className="text-sm text-dark-muted mb-2">Total Volume Extracted</p>
+                  <p className="text-2xl font-bold gradient-text">
+                    {(metadata.total_volume_m3 / 1000000000).toFixed(2)} B m³
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Visualizations */}
+          {/* Compliance Status */}
           <div className="card">
-            <h3 className="font-bold mb-4">3D Visualizations</h3>
-            <div className="space-y-2">
-              {visualizations.map((viz, index) => (
-                <button
-                  key={index}
-                  className="w-full p-3 rounded-lg bg-dark-elevated hover:bg-dark-border transition text-left flex items-center justify-between group"
-                >
-                  <div className="flex items-center space-x-3">
-                    <BarChart3 className="w-4 h-4 text-primary-400" />
-                    <span className="text-sm">{viz.name}</span>
+            <h3 className="text-xl font-bold mb-4">Compliance Status</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                <div>
+                  <p className="font-semibold text-green-400">Authorized Operations</p>
+                  <p className="text-sm text-dark-muted mt-1">Licensed mining sites operating within boundaries</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-green-400">{metadata.legal_mines}</p>
+                  <p className="text-sm text-dark-muted">sites</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-red-500/10 rounded-lg border border-red-500/30">
+                <div>
+                  <p className="font-semibold text-red-400">Unauthorized Activities</p>
+                  <p className="text-sm text-dark-muted mt-1">Detected illegal excavation requiring intervention</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-red-400">{metadata.illegal_mines}</p>
+                  <p className="text-sm text-dark-muted">violations</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Site-wise Breakdown */}
+          <div className="card">
+            <h3 className="text-xl font-bold mb-4">Site-wise Analysis</h3>
+            <div className="space-y-3">
+              {mines.slice(0, 5).map((mine) => (
+                <div key={mine.id} className="p-4 bg-dark-elevated rounded-lg">
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <h4 className="font-semibold">Mining Site #{mine.id}</h4>
+                      <p className="text-sm text-dark-muted">{mine.operator}</p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        mine.type === 'legal'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {mine.type === 'legal' ? 'Authorized' : 'Unauthorized'}
+                    </span>
                   </div>
-                  <span className="text-xs text-dark-muted group-hover:text-primary-400">
-                    {viz.format}
-                  </span>
-                </button>
+                  <div className="grid grid-cols-3 gap-4 mt-3 text-sm">
+                    <div>
+                      <p className="text-dark-muted">Area</p>
+                      <p className="font-semibold">{mine.area_hectares.toFixed(1)} ha</p>
+                    </div>
+                    <div>
+                      <p className="text-dark-muted">Depth</p>
+                      <p className="font-semibold">{mine.depth_m.toFixed(0)} m</p>
+                    </div>
+                    <div>
+                      <p className="text-dark-muted">Volume</p>
+                      <p className="font-semibold">{(mine.volume_m3 / 1000000).toFixed(1)}M m³</p>
+                    </div>
+                  </div>
+                </div>
               ))}
+              <p className="text-center text-dark-muted text-sm">
+                View full site list on the{' '}
+                <a href="/" className="text-primary-400 hover:underline">Dashboard</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar - Quick Actions */}
+        <div className="space-y-6">
+          {/* Data Source */}
+          <div className="card">
+            <h3 className="font-bold mb-4">Data Sources</h3>
+            <div className="space-y-3 text-sm">
+              <div>
+                <p className="text-dark-muted">Satellite Imagery</p>
+                <p className="font-medium">Sentinel-2 RGB</p>
+              </div>
+              <div>
+                <p className="text-dark-muted">Elevation Data</p>
+                <p className="font-medium">SRTM DEM</p>
+              </div>
+              <div>
+                <p className="text-dark-muted">Analysis Date</p>
+                <p className="font-medium">{metadata.computation_date}</p>
+              </div>
             </div>
           </div>
 
@@ -183,44 +216,33 @@ const Reports = () => {
             <div className="space-y-2">
               <button className="btn-primary w-full justify-center">
                 <Download className="w-4 h-4 inline mr-2" />
-                Download All (ZIP)
+                Download Full Report (PDF)
               </button>
               <button className="btn-secondary w-full justify-center">
-                Export as PDF
+                Export Data (JSON)
               </button>
               <button className="btn-secondary w-full justify-center">
-                Export GeoJSON
+                Export Site Map (GeoJSON)
               </button>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="card">
+            <h3 className="font-bold mb-4">Quick Access</h3>
+            <div className="space-y-2">
+              <a href="/map" className="block p-3 rounded-lg bg-dark-elevated hover:bg-dark-border transition text-sm">
+                <MapPin className="w-4 h-4 inline mr-2" />
+                Interactive Map View
+              </a>
+              <a href="/" className="block p-3 rounded-lg bg-dark-elevated hover:bg-dark-border transition text-sm">
+                <BarChart3 className="w-4 h-4 inline mr-2" />
+                Full Data Table
+              </a>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Report Preview */}
-      {selectedReport && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="card"
-        >
-          <h2 className="text-2xl font-bold mb-4">Report Preview</h2>
-          <div className="bg-dark-elevated rounded-lg p-6 border border-dark-border">
-            <div className="text-center text-dark-muted">
-              <FileText className="w-16 h-16 mx-auto mb-4" />
-              <p className="mb-4">
-                Preview for: <strong>{selectedReport.title}</strong>
-              </p>
-              <p className="text-sm mb-6">
-                Full report preview will be displayed here with embedded HTML content,
-                charts, and interactive 3D visualizations.
-              </p>
-              <button className="btn-primary">
-                Open Full Report
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
     </div>
   )
 }

@@ -1,15 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Mountain, LayoutDashboard, Upload, Map, FileText, Activity } from 'lucide-react'
+import { Mountain, LayoutDashboard, Map, FileText } from 'lucide-react'
 
 const Layout = ({ children }) => {
   const location = useLocation()
 
   const navItems = [
     { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-    { name: 'Analysis', path: '/analysis', icon: Activity },
     { name: 'Map View', path: '/map', icon: Map },
     { name: 'Reports', path: '/reports', icon: FileText },
-    { name: 'Upload Data', path: '/upload', icon: Upload },
   ]
 
   const isActive = (path) => location.pathname === path

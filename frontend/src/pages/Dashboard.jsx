@@ -1,66 +1,42 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import StatCard from '../components/StatCard'
-import AreaChart from '../components/AreaChart'
 import { 
   Mountain, AlertTriangle, TrendingUp, Layers, 
-  BarChart3, Activity, MapPin, FileWarning 
+  MapPin, BarChart3
 } from 'lucide-react'
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    totalArea: 152.4,
-    legalArea: 98.6,
-    illegalArea: 53.8,
-    totalSites: 11,
-    violations: 4,
-    avgDepth: 24.5,
-    totalVolume: 3450000,
-    illegalPercentage: 35.3
-  })
+  const [miningData, setMiningData] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const [recentAnalysis, setRecentAnalysis] = useState([
-    { id: 1, name: 'Singrauli Analysis', date: '2025-10-02', status: 'completed', sites: 11 },
-    { id: 2, name: 'Jharkhand Survey', date: '2025-09-28', status: 'completed', sites: 8 },
-    { id: 3, name: 'Chhattisgarh Scan', date: '2025-09-20', status: 'completed', sites: 6 },
-  ])
+  useEffect(() => {
+    // Load actual mining metrics
+    fetch('/computed_metrics.json')
+      .then(res => res.json())
+      .then(data => {
+        setMiningData(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error('Error loading metrics:', err)
+        setLoading(false)
+      })
+  }, [])
 
-  // Chart data for mining activity over time
-  const chartData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-    datasets: [
-      {
-        label: 'Legal Mining (hectares)',
-        data: [85, 88, 92, 90, 93, 95, 96, 97, 98, 98.6],
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-      {
-        label: 'Illegal Mining (hectares)',
-        data: [12, 15, 18, 22, 28, 35, 42, 46, 50, 53.8],
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-    ],
+  if (loading || !miningData) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Mountain className="w-12 h-12 mx-auto mb-4 text-primary-400 animate-pulse" />
+          <p className="text-dark-muted">Loading mining data...</p>
+        </div>
+      </div>
+    )
   }
 
-  const depthData = {
-    labels: ['Mine 1', 'Mine 2', 'Mine 3', 'Mine 4', 'Mine 5', 'Mine 6', 'Mine 7', 'Mine 8'],
-    datasets: [
-      {
-        label: 'Average Depth (meters)',
-        data: [18, 22, 35, 28, 42, 25, 31, 38],
-        borderColor: '#667eea',
-        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-    ],
-  }
+  const { metadata, mines } = miningData
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -68,236 +44,191 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold gradient-text mb-2">
-            Mining Activity Dashboard
+            Mining Monitoring Overview
           </h1>
           <p className="text-dark-muted">
-            Real-time monitoring and analysis of mining activities
+            Singrauli region - Real-time satellite imagery analysis
           </p>
         </div>
-        <button className="btn-primary">
-          <Activity className="w-5 h-5 inline mr-2" />
-          Run New Analysis
-        </button>
+        <Link to="/map" className="btn-primary">
+          <MapPin className="w-5 h-5 inline mr-2" />
+          View Interactive Map
+        </Link>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Mining Area"
-          value={stats.totalArea}
-          unit="hectares"
+          title="Total Mining Sites"
+          value={metadata.total_mines}
+          unit="sites"
           icon={Mountain}
-          trend={8.3}
           color="info"
         />
         <StatCard
-          title="Legal Mining"
-          value={stats.legalArea}
-          unit="hectares"
+          title="Authorized Sites"
+          value={metadata.legal_mines}
+          unit="sites"
           icon={TrendingUp}
-          trend={5.2}
           color="success"
         />
         <StatCard
-          title="Illegal Mining"
-          value={stats.illegalArea}
-          unit="hectares"
-          icon={AlertTriangle}
-          trend={12.8}
-          color="warning"
-        />
-        <StatCard
-          title="Active Sites"
-          value={stats.totalSites}
+          title="Unauthorized Sites"
+          value={metadata.illegal_mines}
           unit="sites"
-          icon={MapPin}
-          color="primary"
-        />
-      </div>
-
-      {/* Secondary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Violations Detected"
-          value={stats.violations}
-          unit="high severity"
-          icon={FileWarning}
-          color="warning"
+          icon={AlertTriangle}
+          color="danger"
         />
         <StatCard
-          title="Average Depth"
-          value={stats.avgDepth}
-          unit="meters"
+          title="Total Area"
+          value={(metadata.total_area_hectares / 1000).toFixed(2)}
+          unit="km²"
           icon={Layers}
           color="info"
         />
-        <StatCard
-          title="Total Volume"
-          value={(stats.totalVolume / 1000000).toFixed(2)}
-          unit="million m³"
-          icon={BarChart3}
-          color="primary"
-        />
-        <StatCard
-          title="Illegal Activity"
-          value={stats.illegalPercentage}
-          unit="% of total"
-          icon={AlertTriangle}
-          trend={-3.2}
-          color="warning"
-        />
       </div>
 
-      {/* Charts Section */}
+      {/* Mining Sites Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="card h-96"
-        >
-          <AreaChart 
-            data={chartData} 
-            title="Mining Activity Trend (2025)"
-          />
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="card h-96"
-        >
-          <AreaChart 
-            data={depthData} 
-            title="Mining Depth Analysis"
-          />
-        </motion.div>
-      </div>
-
-      {/* Violations Alert */}
-      {stats.violations > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="card bg-gradient-to-r from-red-500/10 to-orange-500/10 border-red-500/30"
-        >
-          <div className="flex items-start space-x-4">
-            <div className="p-3 bg-red-500/20 rounded-lg">
-              <AlertTriangle className="w-6 h-6 text-red-400" />
+        {/* Area Distribution */}
+        <div className="card">
+          <h3 className="text-xl font-bold mb-6 flex items-center">
+            <BarChart3 className="w-6 h-6 mr-2 text-primary-400" />
+            Area Distribution
+          </h3>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-dark-muted">Authorized Mining</span>
+                <span className="font-bold text-green-400">
+                  {(metadata.legal_area_hectares / 1000).toFixed(2)} km²
+                </span>
+              </div>
+              <div className="w-full bg-dark-elevated rounded-full h-3">
+                <div
+                  className="h-3 rounded-full bg-green-500"
+                  style={{ width: `${(metadata.legal_area_hectares / metadata.total_area_hectares) * 100}%` }}
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-red-400 mb-2">
-                ⚠️ {stats.violations} Violations Detected
-              </h3>
-              <p className="text-dark-muted mb-4">
-                Illegal mining activities detected outside authorized boundaries. 
-                Immediate action required for {stats.illegalArea} hectares of unauthorized excavation.
-              </p>
-              <div className="flex space-x-4">
-                <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
-                  View Detailed Report
-                </button>
-                <button className="px-4 py-2 bg-dark-elevated border border-dark-border rounded-lg hover:bg-dark-surface transition">
-                  Export Violation Data
-                </button>
+            <div>
+              <div className="flex justify-between mb-2">
+                <span className="text-dark-muted">Unauthorized Mining</span>
+                <span className="font-bold text-red-400">
+                  {(metadata.illegal_area_hectares / 1000).toFixed(2)} km²
+                </span>
+              </div>
+              <div className="w-full bg-dark-elevated rounded-full h-3">
+                <div
+                  className="h-3 rounded-full bg-red-500"
+                  style={{ width: `${(metadata.illegal_area_hectares / metadata.total_area_hectares) * 100}%` }}
+                />
               </div>
             </div>
           </div>
-        </motion.div>
-      )}
-
-      {/* Recent Analysis */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        className="card"
-      >
-        <h3 className="text-xl font-bold mb-4">Recent Analysis</h3>
-        <div className="space-y-3">
-          {recentAnalysis.map((analysis) => (
-            <div
-              key={analysis.id}
-              className="flex items-center justify-between p-4 bg-dark-elevated rounded-lg hover:bg-dark-surface transition cursor-pointer"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="p-2 bg-primary-500/20 rounded-lg">
-                  <Activity className="w-5 h-5 text-primary-400" />
-                </div>
-                <div>
-                  <h4 className="font-semibold">{analysis.name}</h4>
-                  <p className="text-sm text-dark-muted">
-                    {analysis.date} • {analysis.sites} sites detected
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-sm">
-                  {analysis.status}
-                </span>
-                <button className="text-primary-400 hover:text-primary-300 transition">
-                  View →
-                </button>
-              </div>
-            </div>
-          ))}
+          <div className="mt-6 p-4 bg-dark-elevated rounded-lg">
+            <p className="text-sm text-dark-muted mb-2">Compliance Rate</p>
+            <p className="text-3xl font-bold gradient-text">
+              {((metadata.legal_area_hectares / metadata.total_area_hectares) * 100).toFixed(1)}%
+            </p>
+          </div>
         </div>
-      </motion.div>
+
+        {/* Volume Metrics */}
+        <div className="card">
+          <h3 className="text-xl font-bold mb-6 flex items-center">
+            <Mountain className="w-6 h-6 mr-2 text-primary-400" />
+            Excavation Summary
+          </h3>
+          <div className="space-y-4">
+            <div className="p-4 bg-dark-elevated rounded-xl">
+              <p className="text-sm text-dark-muted mb-2">Total Excavation Volume</p>
+              <p className="text-3xl font-bold gradient-text">
+                {(metadata.total_volume_m3 / 1000000000).toFixed(2)} B m³
+              </p>
+            </div>
+            <div className="p-4 bg-dark-elevated rounded-xl">
+              <p className="text-sm text-dark-muted mb-2">Average Depth</p>
+              <p className="text-3xl font-bold gradient-text">
+                {(mines.reduce((sum, m) => sum + (m.depth_m || 0), 0) / mines.length).toFixed(1)} m
+              </p>
+            </div>
+            <div className="p-4 bg-dark-elevated rounded-xl">
+              <p className="text-sm text-dark-muted mb-2">Data Source</p>
+              <p className="text-sm font-medium">{metadata.data_source}</p>
+              <p className="text-xs text-dark-muted mt-1">
+                Last updated: {metadata.computation_date}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mine Sites Table */}
+      <div className="card">
+        <h3 className="text-xl font-bold mb-6">Mining Sites</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-dark-border">
+                <th className="text-left py-3 px-4">Site ID</th>
+                <th className="text-left py-3 px-4">Status</th>
+                <th className="text-right py-3 px-4">Area (ha)</th>
+                <th className="text-right py-3 px-4">Depth (m)</th>
+                <th className="text-right py-3 px-4">Volume (M m³)</th>
+                <th className="text-left py-3 px-4">Operator</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mines.map((mine) => (
+                <motion.tr
+                  key={mine.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="border-b border-dark-border/50 hover:bg-dark-elevated transition"
+                >
+                  <td className="py-3 px-4 font-medium">Site #{mine.id}</td>
+                  <td className="py-3 px-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        mine.type === 'legal'
+                          ? 'bg-green-500/20 text-green-400'
+                          : 'bg-red-500/20 text-red-400'
+                      }`}
+                    >
+                      {mine.type === 'legal' ? 'Authorized' : 'Unauthorized'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-right">{mine.area_hectares.toFixed(1)}</td>
+                  <td className="py-3 px-4 text-right">{mine.depth_m.toFixed(0)}</td>
+                  <td className="py-3 px-4 text-right">
+                    {(mine.volume_m3 / 1000000).toFixed(1)}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-dark-muted">{mine.operator}</td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.6 }}
-          className="card hover:shadow-2xl transition cursor-pointer"
-        >
-          <div className="text-center">
-            <div className="inline-block p-4 bg-gradient-to-br from-primary-500 to-accent-purple rounded-lg mb-4">
-              <Activity className="w-8 h-8 text-white" />
-            </div>
-            <h4 className="font-bold mb-2">Start Analysis</h4>
-            <p className="text-sm text-dark-muted">
-              Upload new satellite data and run mining detection
-            </p>
-          </div>
-        </motion.div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Link to="/map" className="card hover:ring-2 hover:ring-primary-500 transition cursor-pointer">
+          <MapPin className="w-12 h-12 text-primary-400 mb-4" />
+          <h4 className="font-bold mb-2 text-lg">Interactive Map</h4>
+          <p className="text-sm text-dark-muted">
+            View satellite imagery with site boundaries and detailed information
+          </p>
+        </Link>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.7 }}
-          className="card hover:shadow-2xl transition cursor-pointer"
-        >
-          <div className="text-center">
-            <div className="inline-block p-4 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg mb-4">
-              <MapPin className="w-8 h-8 text-white" />
-            </div>
-            <h4 className="font-bold mb-2">View Map</h4>
-            <p className="text-sm text-dark-muted">
-              Interactive map with all detected mining areas
-            </p>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
-          className="card hover:shadow-2xl transition cursor-pointer"
-        >
-          <div className="text-center">
-            <div className="inline-block p-4 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg mb-4">
-              <FileWarning className="w-8 h-8 text-white" />
-            </div>
-            <h4 className="font-bold mb-2">Generate Report</h4>
-            <p className="text-sm text-dark-muted">
-              Create comprehensive analysis report
-            </p>
-          </div>
-        </motion.div>
+        <Link to="/reports" className="card hover:ring-2 hover:ring-primary-500 transition cursor-pointer">
+          <BarChart3 className="w-12 h-12 text-accent-purple mb-4" />
+          <h4 className="font-bold mb-2 text-lg">Analysis Reports</h4>
+          <p className="text-sm text-dark-muted">
+            Access detailed reports and compliance documentation
+          </p>
+        </Link>
       </div>
     </div>
   )
